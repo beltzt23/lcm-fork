@@ -5,3 +5,4 @@ lcm-gen 1.5.1
 """
 
 from .example_t import example_t as example_t
+from .example_valid_t import example_valid_t as example_valid_t

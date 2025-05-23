@@ -5,14 +5,14 @@ def main():
 
     # Intentionally try valid or invalid values here
     msg.timestamp = 1234567890
-    msg.position = [1.0, 2.0]         # Try changing this to [1.0, 2.0] to test failure
+    msg.position = [1.0, 2.0, 3.0]         # Try changing this to [1.0, 2.0] to test failure
     msg.orientation = [0.0, 0.0, 0.0, 1.0]
     msg.num_ranges = 3
-    msg.ranges = [100, 200]          # Try [100, 200] to trigger struct error
-    msg.name = "SensorA"
-    msg.enabled = "True"                    # Try "True" (string) to test type error
+    msg.ranges = [100, 200, 300]          # Try [100, 200] to trigger struct error
+    msg.name = "Sensor-A"
+    msg.enabled = True                    # Try "True" (string) to test type error
 
-    # ✅ Wrap encoding in try/except block
+    # Wrap encoding in try/except block
     try:
         encoded = msg.encode()
     except Exception as e:

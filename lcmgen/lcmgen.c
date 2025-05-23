@@ -806,10 +806,47 @@ int lcmgen_handle_file(lcmgen_t *lcmgen, const char *path)
 
     tokenize_destroy(t);
     if (res == 0 || res == EOF)
+//         return 0;
+//     else
+//         return res;
+// }
+        for (int i = 0; i < lcmgen->ntypes; i++){
+            lcm_type_t * types = lcmgen->types[i];
+            if (types-> types != LCM_STRUCT) 
+            continue;
+
+            lcm_struct_t *st = type->st;
+            for (int j=0; j < st-> nfields; j++){
+                lcm_find_t *field = st -> fields[j];
+                const char *tname = field ->type -> lctypename;
+
+                //Allowed types
+                const char *allowed[] {
+                    "int8_t", "int16_t", "int32_t" , "int64_t", "float",
+                    "double", "string", "boolean", "byte"
+                };
+                int n_allowed = sizeof(allowed) / sizeof(allowed[0]);
+                int valid = 0;
+                for (int k = 0; k < n_allowed; k++){
+                    if (strcmp(tname, allowed[k]) == 0){
+                        valid = 1;
+                        break;
+                    }
+                }
+                if (!valid) {
+                    fprintf(stderr, "❌ ERROR: Unsupported type '%s' in struct '%s' (field '%s')\n",
+                        tname, st->structname, field->fieldname);
+                    return -1;
+                }
+            }
+        }
         return 0;
-    else
+        
+    }else {
+
         return res;
-}
+
+    }
 
 void lcm_typename_dump(lcm_typename_t *lt)
 {

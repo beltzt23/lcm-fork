@@ -1,0 +1,6 @@
+package exlcm;
+
+struct example_invalid_t {
+    uint32_t bad_field;  
+    int32_t good_field;
+}
