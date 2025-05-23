@@ -805,49 +805,52 @@ int lcmgen_handle_file(lcmgen_t *lcmgen, const char *path)
     } while (res == 0);
 
     tokenize_destroy(t);
-    if (res == 0 || res == EOF)
+
 //         return 0;
 //     else
 //         return res;
 // }
+    if (res == 0 || res == EOF)
         for (int i = 0; i < lcmgen->ntypes; i++){
             lcm_type_t * types = lcmgen->types[i];
+
+            // only validate struct types
             if (types-> types != LCM_STRUCT) 
             continue;
 
             lcm_struct_t *st = type->st;
-            for (int j=0; j < st-> nfields; j++){
-                lcm_find_t *field = st -> fields[j];
-                const char *tname = field ->type -> lctypename;
+            for (int j = 0; j < g_ptr_array_size(st -> members); j++) {
+                lcm_member_t *field = (lcm_member_t *) g_ptr_array_index(st->members, j);
+            const char *tname = field->type->lctypename;
 
                 //Allowed types
                 const char *allowed[] {
                     "int8_t", "int16_t", "int32_t" , "int64_t", "float",
                     "double", "string", "boolean", "byte"
                 };
+
                 int n_allowed = sizeof(allowed) / sizeof(allowed[0]);
                 int valid = 0;
+
                 for (int k = 0; k < n_allowed; k++){
                     if (strcmp(tname, allowed[k]) == 0){
                         valid = 1;
                         break;
                     }
                 }
-                if (!valid) {
-                    fprintf(stderr, "❌ ERROR: Unsupported type '%s' in struct '%s' (field '%s')\n",
-                        tname, st->structname, field->fieldname);
-                    return -1;
-                }
+
+        if (!valid) {
+                fprintf(stderr, "❌ ERROR: Unsupported type '%s' in struct '%s' (field '%s')\n",
+                    tname,
+                    st->structname->shortname,
+                     field->membername);
+                return -1;
             }
         }
-        return 0;
-        
-    }else {
-
-        return res;
-
     }
-
+    return 0;
+} else {
+    return res;
 void lcm_typename_dump(lcm_typename_t *lt)
 {
     char buf[1024];
