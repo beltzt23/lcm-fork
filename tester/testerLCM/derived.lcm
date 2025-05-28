@@ -1,0 +1,8 @@
+package example;
+import example.Base;
+
+struct Derived {
+    Base base;  // Simulating inheritance
+    float64 value;
+    string message;
+}

@@ -521,11 +521,23 @@ int parse_member(lcmgen_t *lcmgen, lcm_struct_t *lr, tokenize_t *t)
     // DEBUG: Show every type being parsed
     printf("DEBUG: Saw type '%s'\n", lt -> shortname);
 
-    // Custom Type Validation: disallow unsupported primative types
+    // Allow either primitive types or known user-defined struct types
     if (!lcm_is_primitive_type(lt->shortname)) {
-        semantic_error(t, "Unsupported type '%s' - LCM does not support this type. Use a supported primitive type like int32_t or float", lt -> shortname);
+        // Try to find the type as a user-defined struct
+        const lcm_struct_t *found_struct = find_struct(lcmgen, lt->package, lt->shortname);
 
+    // If we can't find it, show an error and stop
+    if (found_struct == NULL) {
+        semantic_error(t, "Unsupported type '%s' - Not a primitive or a known struct. Ensure it's defined and imported properly.", lt->lctypename);
     }
+ // If found, it's valid — continue normally
+}
+
+    // // Custom Type Validation: disallow unsupported primative types
+    // if (!lcm_is_primitive_type(lt->shortname)) {
+    //     semantic_error(t, "Unsupported type '%s' - LCM does not support this type. Use a supported primitive type like int32_t or float", lt -> shortname);
+
+    // }
 
     while (1) {
         // get the lcm type name

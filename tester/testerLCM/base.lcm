@@ -1,0 +1,7 @@
+package example;
+
+struct Base{
+    int64 timestamp;
+    int32 id;
+
+}
