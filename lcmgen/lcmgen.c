@@ -32,6 +32,8 @@
 
 lcm_struct_t *parse_struct(lcmgen_t *lcm, const char *lcmfile, tokenize_t *t);
 lcm_enum_t *parse_enum(lcmgen_t *lcm, const char *lcmfile, tokenize_t *t);
+const lcm_struct_t *find_struct(lcmgen_t *lcmgen, const char *package, const char *name);
+
 
 // lcm's built-in types. Note that unsigned types are not present
 // because there is no safe java implementation. Really, you don't
@@ -518,6 +520,30 @@ int parse_member(lcmgen_t *lcmgen, lcm_struct_t *lr, tokenize_t *t)
 
     lt = lcm_typename_create(lcmgen, t->token);
 
+    // Flatten inheritance-like use: e.g., `type_header;`
+const lcm_struct_t *base_struct = find_struct(lcmgen, lt->package, lt->shortname);
+if (parse_try_consume(t, ";") && base_struct != NULL) {
+    for (unsigned int i = 0; i < g_ptr_array_size(base_struct->members); i++) {
+        lcm_member_t *parent_member = (lcm_member_t *) g_ptr_array_index(base_struct->members, i);
+        lcm_member_t *cloned = lcm_member_create();
+        cloned->type = lcm_typename_create(lcmgen, parent_member->type->lctypename);
+        cloned->membername = strdup(parent_member->membername);
+
+        // Copy dimensions
+        for (unsigned int j = 0; j < g_ptr_array_size(parent_member->dimensions); j++) {
+            lcm_dimension_t *orig = (lcm_dimension_t *) g_ptr_array_index(parent_member->dimensions, j);
+            lcm_dimension_t *dim = (lcm_dimension_t *) calloc(1, sizeof(lcm_dimension_t));
+            dim->mode = orig->mode;
+            dim->size = strdup(orig->size);
+            g_ptr_array_add(cloned->dimensions, dim);
+        }
+
+        g_ptr_array_add(lr->members, cloned);
+    }
+
+    return 0;
+}
+
     // DEBUG: Show every type being parsed
     printf("DEBUG: Saw type '%s'\n", lt -> shortname);
 
@@ -528,8 +554,24 @@ int parse_member(lcmgen_t *lcmgen, lcm_struct_t *lr, tokenize_t *t)
 
     // If we can't find it, show an error and stop
     if (found_struct == NULL) {
+    // Try resolving by shortname only (even if package is missing)
+    for (int i = 0; i < lcmgen->structs->len; i++) {
+        lcm_struct_t *candidate = (lcm_struct_t *) g_ptr_array_index(lcmgen->structs, i);
+        if (!strcmp(candidate->structname->shortname, lt->shortname)) {
+            printf("DEBUG: Auto-resolved '%s' to '%s'\n", lt->shortname, lt->lctypename);
+            // Auto-correct package and fully-qualified name
+            lt->package = strdup(candidate->structname->package);
+            lt->lctypename = g_strdup_printf("%s.%s", lt->package, lt->shortname);
+            found_struct = candidate;
+            break;
+        }
+    }
+
+    if (found_struct == NULL) {
         semantic_error(t, "Unsupported type '%s' - Not a primitive or a known struct. Ensure it's defined and imported properly.", lt->lctypename);
     }
+}
+
  // If found, it's valid — continue normally
 }
 
